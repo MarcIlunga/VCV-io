@@ -112,19 +112,23 @@ def block (key : BitVec 256) (nonce : BitVec 96) (counter : BitVec 32) : ByteArr
   let result := addStates final initial
   stateToBytes result
 
-/-- XOR two byte arrays -/
+/-- XOR two byte arrays of equal length.
+If arrays have different sizes, result is truncated to the shorter length.
+This is intentional for XOR-ing plaintext chunks with keystream. -/
 def xorBytes (a b : ByteArray) : ByteArray :=
   ByteArray.mk (Array.zipWith a.data b.data fun x y => x ^^^ y)
 
 /-- ChaCha20 encryption/decryption (same operation due to XOR).
-Encrypts plaintext using key, nonce, starting from given counter. -/
+Encrypts plaintext using key, nonce, starting from given counter.
+Note: counter + numBlocks should not exceed 2^32 for proper operation. -/
 def encrypt (key : BitVec 256) (nonce : BitVec 96) (counter : Nat) (plaintext : ByteArray) :
     ByteArray :=
   let blockSize : Nat := 64
   let numBlocks := (plaintext.size + blockSize - 1) / blockSize
   let mut result := ByteArray.empty
   for i in [0:numBlocks] do
-    let blockCounter : BitVec 32 := (counter + i).toUInt32.toBitVec
+    -- Counter wraps at 2^32 per RFC 8439
+    let blockCounter : BitVec 32 := BitVec.ofNat 32 (counter + i)
     let keystream := block key nonce blockCounter
     let start := i * blockSize
     let endPos := min ((i + 1) * blockSize) plaintext.size

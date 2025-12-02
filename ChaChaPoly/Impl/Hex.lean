@@ -66,8 +66,9 @@ def decodeToBitVec96 (s : String) : BitVec 96 :=
     result := result + (byte <<< (i * 8))
   BitVec.ofNat 96 result
 
-/-- Convert a natural number to little-endian ByteArray of specified size -/
-private def natToBytes (n : Nat) (size : Nat) : ByteArray :=
+/-- Convert a natural number to little-endian ByteArray of specified size.
+This is a common utility used by both Poly1305 and test vectors. -/
+def natToBytes (n : Nat) (size : Nat) : ByteArray :=
   let mut result := ByteArray.mkEmpty size
   let mut val := n
   for _ in [0:size] do

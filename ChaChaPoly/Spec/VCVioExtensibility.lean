@@ -47,9 +47,10 @@ def Real_AEAD_Oracle (k : BitVec 256) (input : AEADInput) : ProbComp AEADOutput 
   let (tag, ciphertext) := ChaChaPoly.encryptAndTag k input.nonce input.plaintext input.aad
   pure { tag := tag, ciphertext := ciphertext }
 
-/-- Real World decryption oracle -/
-def Real_AEAD_Decrypt_Oracle (k : BitVec 256) (ciphertext : ByteArray)
-    (tag : ByteArray) (nonce : BitVec 96) (aad : ByteArray := ByteArray.empty) :
+/-- Real World decryption oracle.
+Parameter order matches Real_AEAD_Oracle for consistency. -/
+def Real_AEAD_Decrypt_Oracle (k : BitVec 256) (nonce : BitVec 96) (ciphertext : ByteArray)
+    (tag : ByteArray) (aad : ByteArray := ByteArray.empty) :
     ProbComp (Option ByteArray) :=
   pure (ChaChaPoly.decrypt k nonce ciphertext tag aad)
 

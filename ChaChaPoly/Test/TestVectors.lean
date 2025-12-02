@@ -142,18 +142,9 @@ def polyKeyGenTestNonce : BitVec 96 :=
 def polyKeyGenExpected : String :=
   "8ad5a08b905f81cc815040274ab29471a833b637e3fd0da508dbb8e2fdd1a646"
 
-/-- Convert a natural number to little-endian ByteArray of specified size -/
-private def natToBytes (n : Nat) (size : Nat) : ByteArray :=
-  let mut result := ByteArray.mkEmpty size
-  let mut val := n
-  for _ in [0:size] do
-    result := result.push (val % 256).toUInt8
-    val := val / 256
-  result
-
 def testPoly1305KeyGen : Bool :=
   let result := ChaChaPoly.generatePoly1305Key polyKeyGenTestKey polyKeyGenTestNonce
-  let bytes := natToBytes result.toNat 32
+  let bytes := Hex.natToBytes result.toNat 32
   Hex.encode bytes == polyKeyGenExpected
 
 /-! ## Run All Tests -/

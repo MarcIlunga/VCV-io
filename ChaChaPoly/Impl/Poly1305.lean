@@ -20,9 +20,13 @@ Certain bits must be cleared to ensure the key is in a specific form. -/
 def clamp (r : BitVec 128) : BitVec 128 :=
   r &&& 0x0ffffffc0ffffffc0ffffffc0fffffff
 
-/-- Convert a little-endian ByteArray to a natural number -/
+/-- Convert a little-endian ByteArray to a natural number.
+First byte is least significant (index 0 = LSB). -/
 def bytesToNat (bytes : ByteArray) : Nat :=
-  bytes.data.foldr (init := 0) fun byte acc => acc * 256 + byte.toNat
+  let mut result : Nat := 0
+  for i in [0:bytes.size] do
+    result := result + bytes.data[i]!.toNat * (256 ^ i)
+  result
 
 /-- Convert a natural number to little-endian ByteArray of specified size -/
 def natToBytes (n : Nat) (size : Nat) : ByteArray :=
