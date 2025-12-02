@@ -10,6 +10,15 @@ extern "C" lean_obj_res my_lean_fun() {
     return lean_io_result_mk_ok(lean_box(0));
 }
 
+// Ensure libsodium is initialized (idempotent, safe to call multiple times)
+static int ensure_sodium_init() {
+    static int initialized = -1;
+    if (initialized == -1) {
+        initialized = sodium_init();
+    }
+    return initialized;
+}
+
 // ChaCha20-Poly1305 encryption
 // Returns 0 on success, -1 on failure
 extern "C" int chacha20_poly1305_encrypt(
@@ -22,7 +31,12 @@ extern "C" int chacha20_poly1305_encrypt(
     const unsigned char *nonce,
     const unsigned char *key
 ) {
-    if (sodium_init() < 0) {
+    // Validate inputs
+    if (!ciphertext || !message || !nonce || !key) {
+        return -1;
+    }
+    
+    if (ensure_sodium_init() < 0) {
         return -1;
     }
     
@@ -47,7 +61,12 @@ extern "C" int chacha20_poly1305_decrypt(
     const unsigned char *nonce,
     const unsigned char *key
 ) {
-    if (sodium_init() < 0) {
+    // Validate inputs
+    if (!message || !ciphertext || !nonce || !key) {
+        return -1;
+    }
+    
+    if (ensure_sodium_init() < 0) {
         return -1;
     }
     

@@ -13,14 +13,26 @@ surface that should be connected to the C++ implementation.
 namespace ChaCha20Poly1305
 
 -- Constants for key, nonce, and authentication tag sizes
+-- These values match the IETF ChaCha20-Poly1305 specification (RFC 8439)
+-- and are provided by libsodium's crypto_aead_chacha20poly1305_ietf_* constants
+
+/-- Key size in bytes (32 bytes = 256 bits) -/
 @[extern "chacha20_poly1305_keybytes"]
-opaque keyBytes : USize
+opaque keyBytesImpl : USize
 
+def keyBytes : USize := 32  -- Fallback: crypto_aead_chacha20poly1305_ietf_KEYBYTES
+
+/-- Nonce size in bytes (12 bytes = 96 bits) -/
 @[extern "chacha20_poly1305_noncebytes"]
-opaque nonceBytes : USize
+opaque nonceBytesImpl : USize
 
+def nonceBytes : USize := 12  -- Fallback: crypto_aead_chacha20poly1305_ietf_NPUBBYTES
+
+/-- Authentication tag size in bytes (16 bytes = 128 bits) -/
 @[extern "chacha20_poly1305_abytes"]
-opaque aBytes : USize
+opaque aBytesImpl : USize
+
+def aBytes : USize := 16  -- Fallback: crypto_aead_chacha20poly1305_ietf_ABYTES
 
 /-- 
 Encrypt a message using ChaCha20-Poly1305 AEAD.
