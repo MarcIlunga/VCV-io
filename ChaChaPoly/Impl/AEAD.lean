@@ -14,18 +14,6 @@ import ChaChaPoly.Impl.Poly1305
 
 namespace ChaChaPoly
 
-/-- Construct the Poly1305 key by encrypting 32 zero bytes with ChaCha20 at counter 0 -/
-def generatePoly1305Key (key : BitVec 256) (nonce : BitVec 96) : BitVec 256 :=
-  let zeros := ByteArray.mkEmpty 32 |> fun ba =>
-    let mut result := ba
-    for _ in [0:32] do
-      result := result.push 0
-    result
-  let keystream := ChaCha20.block key nonce 0
-  let polyKeyBytes := keystream.extract 0 32
-  -- Convert to BitVec 256
-  bytesToBitVec256 polyKeyBytes
-
 /-- Convert 32-byte array to BitVec 256 (little-endian) -/
 def bytesToBitVec256 (bytes : ByteArray) : BitVec 256 :=
   let mut result : Nat := 0
@@ -41,6 +29,13 @@ def bytesToBitVec96 (bytes : ByteArray) : BitVec 96 :=
     let byte := if h : i < bytes.size then bytes.data[i].toNat else 0
     result := result + (byte <<< (i * 8))
   BitVec.ofNat 96 result
+
+/-- Construct the Poly1305 key by encrypting 32 zero bytes with ChaCha20 at counter 0 -/
+def generatePoly1305Key (key : BitVec 256) (nonce : BitVec 96) : BitVec 256 :=
+  let keystream := ChaCha20.block key nonce 0
+  let polyKeyBytes := keystream.extract 0 32
+  -- Convert to BitVec 256
+  bytesToBitVec256 polyKeyBytes
 
 /-- Pad a ByteArray to a multiple of 16 bytes -/
 def padTo16Multiple (bytes : ByteArray) : ByteArray :=
@@ -103,7 +98,7 @@ def decrypt (key : BitVec 256) (nonce : BitVec 96) (ciphertext : ByteArray)
 Returns (tag, ciphertext) to match the oracle interface. -/
 def encryptAndTag (key : BitVec 256) (nonce : BitVec 96) (plaintext : ByteArray)
     (aad : ByteArray := ByteArray.empty) : (BitVec 128 × ByteArray) :=
-  let (ciphertext, tagBytes) := encrypt key nonce plaintext aad
+  let (ciphertext, _) := encrypt key nonce plaintext aad
   let tag := Poly1305.mac (generatePoly1305Key key nonce)
                (constructMacData aad ciphertext)
   (tag, ciphertext)

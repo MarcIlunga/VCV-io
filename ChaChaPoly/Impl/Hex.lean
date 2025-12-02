@@ -66,18 +66,18 @@ def decodeToBitVec96 (s : String) : BitVec 96 :=
     result := result + (byte <<< (i * 8))
   BitVec.ofNat 96 result
 
+/-- Convert a natural number to little-endian ByteArray of specified size -/
+private def natToBytes (n : Nat) (size : Nat) : ByteArray :=
+  let mut result := ByteArray.mkEmpty size
+  let mut val := n
+  for _ in [0:size] do
+    result := result.push (val % 256).toUInt8
+    val := val / 256
+  result
+
 /-- Encode a BitVec 128 to hex string (little-endian) -/
 def encodeBitVec128 (v : BitVec 128) : String :=
-  let bytes := Poly1305.natToBytes v.toNat 16
+  let bytes := natToBytes v.toNat 16
   encode bytes
-where
-  -- Inline natToBytes to avoid import cycle
-  Poly1305.natToBytes (n : Nat) (size : Nat) : ByteArray :=
-    let mut result := ByteArray.mkEmpty size
-    let mut val := n
-    for _ in [0:size] do
-      result := result.push (val % 256).toUInt8
-      val := val / 256
-    result
 
 end Hex

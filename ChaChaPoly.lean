@@ -28,9 +28,8 @@ import ChaChaPoly.Impl.Poly1305
 import ChaChaPoly.Impl.AEAD
 import ChaChaPoly.Impl.Hex
 
--- Test Infrastructure
+-- Test Infrastructure (test vectors only, Runner has main)
 import ChaChaPoly.Test.TestVectors
-import ChaChaPoly.Test.Runner
 
 -- VCV-io Spec Layer (commented out by default to allow pure usage)
 -- import ChaChaPoly.Spec.VCVioExtensibility
