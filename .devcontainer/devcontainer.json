@@ -1,0 +1,31 @@
+{
+  "name": "VCV-io Lean 4 Development",
+  "build": {
+    "dockerfile": "Dockerfile"
+  },
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "leanprover.lean4"
+      ],
+      "settings": {
+        "editor.insertSpaces": true,
+        "editor.tabSize": 2,
+        "editor.rulers": [100],
+        "editor.acceptSuggestionOnEnter": "off",
+        "files.encoding": "utf8",
+        "files.eol": "\n",
+        "files.insertFinalNewline": true,
+        "files.trimFinalNewlines": true,
+        "files.trimTrailingWhitespace": true,
+        "git.ignoreLimitWarning": true,
+        "files.readonlyInclude": {
+          "**/.elan/**": true,
+          "**/.lake/**": true
+        }
+      }
+    }
+  },
+  "postCreateCommand": "lake exe cache get",
+  "remoteUser": "vscode"
+}
