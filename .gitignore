@@ -2,6 +2,12 @@
 .DS_Store
 /.ignore/
 
+# Elan toolchain installer
+elan-init
+
+# CodeQL artifacts
+_codeql_detected_source_root
+
 # LaTeX compilation files
 *.aux
 *.paux

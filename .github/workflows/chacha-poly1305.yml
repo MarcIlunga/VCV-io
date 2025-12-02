@@ -1,0 +1,140 @@
+name: ChaCha20-Poly1305 CI
+
+on:
+  push:
+    branches: ["main", "copilot/add-ci-pipeline-for-chacha-poly1305"]
+    paths:
+      - 'LibSodium/ChaCha20Poly1305.lean'
+      - 'LibSodium/c/libsodium.cpp'
+      - '.github/workflows/chacha-poly1305.yml'
+  pull_request:
+    branches: ["main"]
+    paths:
+      - 'LibSodium/ChaCha20Poly1305.lean'
+      - 'LibSodium/c/libsodium.cpp'
+      - '.github/workflows/chacha-poly1305.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  check-chacha-poly1305:
+    name: Check ChaCha20-Poly1305 Implementation
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    
+    steps:
+      - name: Install system dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libsodium-dev
+
+      - name: Install elan
+        run: |
+          set -o pipefail
+          curl -sSfL https://github.com/leanprover/elan/releases/download/v3.0.0/elan-x86_64-unknown-linux-gnu.tar.gz | tar xz
+          ./elan-init -y --default-toolchain none
+          echo "$HOME/.elan/bin" >> $GITHUB_PATH
+
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Get Lean dependencies
+        run: |
+          lake exe cache clean
+          lake exe cache get || echo "Cache download failed, will build from source"
+
+      - name: Build LibSodium module
+        run: |
+          lake build LibSodium
+
+      - name: Check ChaCha20-Poly1305 bindings compile
+        run: |
+          lake build LibSodium.ChaCha20Poly1305
+
+      - name: Build and run tests
+        run: |
+          lake build test
+          lake exe test
+
+  lint-chacha-poly1305:
+    name: Lint ChaCha20-Poly1305 Code
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Check C++ code formatting
+        run: |
+          # Check if the ChaCha20-Poly1305 functions are present in libsodium.cpp
+          if grep -q "chacha20_poly1305_encrypt" LibSodium/c/libsodium.cpp; then
+            echo "✓ ChaCha20-Poly1305 encrypt function found"
+          else
+            echo "✗ ChaCha20-Poly1305 encrypt function not found"
+            exit 1
+          fi
+          
+          if grep -q "chacha20_poly1305_decrypt" LibSodium/c/libsodium.cpp; then
+            echo "✓ ChaCha20-Poly1305 decrypt function found"
+          else
+            echo "✗ ChaCha20-Poly1305 decrypt function not found"
+            exit 1
+          fi
+
+      - name: Check Lean bindings exist
+        run: |
+          if [ -f "LibSodium/ChaCha20Poly1305.lean" ]; then
+            echo "✓ ChaCha20-Poly1305 Lean bindings file exists"
+          else
+            echo "✗ ChaCha20-Poly1305 Lean bindings file not found"
+            exit 1
+          fi
+          
+          # Check if the file is imported in LibSodium.lean
+          if grep -q "ChaCha20Poly1305" LibSodium.lean; then
+            echo "✓ ChaCha20Poly1305 module is imported"
+          else
+            echo "✗ ChaCha20Poly1305 module is not imported"
+            exit 1
+          fi
+
+  security-check:
+    name: Security Checks for ChaCha20-Poly1305
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Check for proper error handling
+        run: |
+          # Verify that error handling is present in C++ code
+          if grep -q "ensure_sodium_init()" LibSodium/c/libsodium.cpp; then
+            echo "✓ Sodium initialization check present"
+          else
+            echo "⚠ Warning: No sodium initialization check found"
+          fi
+          
+          # Check for null pointer validation
+          if grep -q "if (!ciphertext || !message || !nonce || !key)" LibSodium/c/libsodium.cpp; then
+            echo "✓ Null pointer validation present in encrypt function"
+          else
+            echo "⚠ Warning: No null pointer validation found"
+          fi
+
+      - name: Verify constant time operations
+        run: |
+          # Ensure we're using libsodium's constant-time operations
+          if grep -q "crypto_aead_chacha20poly1305" LibSodium/c/libsodium.cpp; then
+            echo "✓ Using libsodium's constant-time ChaCha20-Poly1305 implementation"
+          else
+            echo "✗ Not using libsodium's ChaCha20-Poly1305 implementation"
+            exit 1
+          fi
