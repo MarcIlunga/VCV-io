@@ -32,10 +32,14 @@ def quarterRound (a b c d : BitVec 32) : (BitVec 32 × BitVec 32 × BitVec 32 ×
   let c := c + d; let b := (b ^^^ c).rotateLeft 7
   (a, b, c, d)
 
+/-- Update a value in a vector at a given index -/
+def vecSet {α : Type} {n : Nat} (v : Vector α n) (i : Fin n) (x : α) : Vector α n :=
+  ⟨v.toArray.set i x, by simp [Array.size_set, v.2]⟩
+
 /-- Apply quarter round at specific indices in the state -/
 def applyQuarterRound (state : State) (i j k l : Fin 16) : State :=
   let (a', b', c', d') := quarterRound state[i] state[j] state[k] state[l]
-  state.set i a' |>.set j b' |>.set k c' |>.set l d'
+  vecSet (vecSet (vecSet (vecSet state i a') j b') k c') l d'
 
 /-- Column round: Apply quarter rounds to columns -/
 def columnRound (state : State) : State :=
@@ -101,7 +105,7 @@ def word32ToBytes (w : BitVec 32) : ByteArray :=
 def stateToBytes (state : State) : ByteArray :=
   let mut result := ByteArray.empty
   for i in [0:16] do
-    result := result ++ word32ToBytes state[i]!
+    result := result ++ word32ToBytes state[⟨i, by omega⟩]
   result
 
 /-- The ChaCha20 block function: Maps Key/Nonce/Counter to a 64-byte keystream.

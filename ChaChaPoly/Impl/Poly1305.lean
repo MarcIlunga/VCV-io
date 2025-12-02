@@ -24,8 +24,8 @@ def clamp (r : BitVec 128) : BitVec 128 :=
 First byte is least significant (index 0 = LSB). -/
 def bytesToNat (bytes : ByteArray) : Nat :=
   let mut result : Nat := 0
-  for i in [0:bytes.size] do
-    result := result + bytes.data[i]!.toNat * (256 ^ i)
+  for h : i in [0:bytes.size] do
+    result := result + bytes.data[i].toNat * (256 ^ i)
   result
 
 /-- Convert a natural number to little-endian ByteArray of specified size -/
