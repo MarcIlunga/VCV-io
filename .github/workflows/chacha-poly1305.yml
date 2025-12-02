@@ -21,9 +21,6 @@ jobs:
     runs-on: ubuntu-latest
     
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-
       - name: Install system dependencies
         run: |
           sudo apt-get update
@@ -36,8 +33,12 @@ jobs:
           ./elan-init -y --default-toolchain none
           echo "$HOME/.elan/bin" >> $GITHUB_PATH
 
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
       - name: Get Lean dependencies
         run: |
+          lake exe cache clean
           lake exe cache get || echo "Cache download failed, will build from source"
 
       - name: Build LibSodium module
