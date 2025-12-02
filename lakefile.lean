@@ -40,6 +40,12 @@ lean_lib LibSodium
 /-- Main function for testing -/
 lean_exe test where root := `Test
 
+/-- Pure ChaCha20-Poly1305 implementation following RFC 8439. -/
+lean_lib ChaChaPoly
+
+/-- KAT test runner for ChaCha20-Poly1305 -/
+lean_exe chachapoly_test where root := `ChaChaPoly.Test.Runner
+
 -- /-- Runnable implementations of specific cryptographic algorithms.
 -- Set `precompileModules` in order to allow execution of external code. -/
 -- lean_lib Implementations where
