@@ -2,6 +2,9 @@
 .DS_Store
 /.ignore/
 
+# Elan toolchain installer
+elan-init
+
 # LaTeX compilation files
 *.aux
 *.paux
