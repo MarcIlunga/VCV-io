@@ -2,6 +2,16 @@
 
 This module provides Lean 4 bindings to the libsodium implementation of ChaCha20-Poly1305, a modern Authenticated Encryption with Associated Data (AEAD) algorithm.
 
+## Current Status
+
+⚠️ **Note**: The current implementation provides:
+- ✅ Complete C++ wrapper functions in `libsodium.cpp`
+- ✅ Lean API interface and type signatures
+- ✅ Placeholder implementations for testing the build system
+- ⏳ Full FFI integration (requires additional build system configuration)
+
+The C++ functions are implemented and ready to use. The Lean bindings currently use placeholder implementations that simulate the encryption/decryption behavior for testing purposes. To enable full functionality, the FFI calls need to be connected via the lake build system's `@[extern]` mechanism.
+
 ## Overview
 
 ChaCha20-Poly1305 is a high-speed AEAD construction that combines:
