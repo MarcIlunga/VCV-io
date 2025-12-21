@@ -1,4 +1,6 @@
 name: UC Framework CI
+# This workflow tests the UC framework implementation
+# Last updated: 2025-12-21
 
 on:
   push:
@@ -20,8 +22,9 @@ jobs:
       - name: Check UC modules are imported in VCVio.lean
         run: |
           echo "Checking UC module imports..."
-          git ls-files 'VCVio/UC/*.lean' | LC_ALL=C sort | sed 's/\.lean//;s,/,.,g;s/^/import /' > expected_uc_imports.txt
-          
+          git ls-files 'VCVio/UC/*.lean' | LC_ALL=C sort | \
+            sed 's/\.lean//;s,/,.,g;s/^/import /' > expected_uc_imports.txt
+
           # Check if all UC modules are imported
           while IFS= read -r import_line; do
             if ! grep -q "^$import_line" VCVio.lean; then
@@ -29,7 +32,7 @@ jobs:
               exit 1
             fi
           done < expected_uc_imports.txt
-          
+
           echo "✅ All UC modules are properly imported"
 
   build-uc:
@@ -39,7 +42,9 @@ jobs:
       - name: Install elan
         run: |
           set -o pipefail
-          curl -sSfL https://github.com/leanprover/elan/releases/download/v3.0.0/elan-x86_64-unknown-linux-gnu.tar.gz | tar xz
+          curl -sSfL \
+            https://github.com/leanprover/elan/releases/download/v3.0.0/elan-x86_64-unknown-linux-gnu.tar.gz \
+            | tar xz
           ./elan-init -y --default-toolchain none
           echo "$HOME/.elan/bin" >> $GITHUB_PATH
 
@@ -47,7 +52,8 @@ jobs:
 
       - name: Get mathlib cache
         run: |
-          lake exe cache get || echo "Cache not available, will build from scratch"
+          lake exe cache get || \
+            echo "Cache not available, will build from scratch"
 
       - name: Build UC modules
         run: |
@@ -84,7 +90,9 @@ jobs:
       - name: Install elan
         run: |
           set -o pipefail
-          curl -sSfL https://github.com/leanprover/elan/releases/download/v3.0.0/elan-x86_64-unknown-linux-gnu.tar.gz | tar xz
+          curl -sSfL \
+            https://github.com/leanprover/elan/releases/download/v3.0.0/elan-x86_64-unknown-linux-gnu.tar.gz \
+            | tar xz
           ./elan-init -y --default-toolchain none
           echo "$HOME/.elan/bin" >> $GITHUB_PATH
 
@@ -111,14 +119,14 @@ jobs:
       - name: Check specification files exist
         run: |
           echo "Checking UC specification files..."
-          
+
           files=(
             "UC_SPECIFICATION.md"
             "UC_IMPLEMENTATION_SUMMARY.md"
             "UC_OVERVIEW.txt"
             "VCVio/UC/README.md"
           )
-          
+
           for file in "${files[@]}"; do
             if [ -f "$file" ]; then
               echo "✅ Found: $file"
@@ -127,13 +135,13 @@ jobs:
               exit 1
             fi
           done
-          
+
           echo "✅ All specification files present"
 
       - name: Verify basic UC examples are documented
         run: |
           echo "Checking UC_SPECIFICATION.md for basic examples..."
-          
+
           patterns=(
             "Authenticated Channel"
             "Secure Communication"
@@ -145,7 +153,7 @@ jobs:
             "F_ZK"
             "F_COM"
           )
-          
+
           for pattern in "${patterns[@]}"; do
             if grep -q "$pattern" UC_SPECIFICATION.md; then
               echo "✅ Found: $pattern"
@@ -154,7 +162,7 @@ jobs:
               exit 1
             fi
           done
-          
+
           echo "✅ All basic UC patterns documented"
 
   status-report:
@@ -176,7 +184,7 @@ jobs:
           echo "- Build UC: ${{ needs.build-uc.result }}"
           echo "- Test Examples: ${{ needs.test-uc-examples.result }}"
           echo "- Verify Spec: ${{ needs.verify-specification.result }}"
-          
+
           if [ "${{ needs.check-uc-imports.result }}" != "success" ] || \
              [ "${{ needs.build-uc.result }}" != "success" ] || \
              [ "${{ needs.test-uc-examples.result }}" != "success" ] || \
@@ -185,6 +193,6 @@ jobs:
             echo "❌ Some checks failed"
             exit 1
           fi
-          
+
           echo ""
           echo "🎉 All UC Framework checks passed!"
