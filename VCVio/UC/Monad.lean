@@ -55,7 +55,7 @@ This is a Reader-State-Oracle computation that provides:
 - Mutable LocalState for party-specific state
 - Oracle access through the underlying OracleComp monad
 -/
-abbrev UC (spec : OracleSpec ι) (α : Type*) := 
+abbrev UC {ι : Type*} (spec : OracleSpec ι) (α : Type*) := 
   ReaderT UCContext (StateT LocalState (OracleComp spec)) α
 
 namespace UC
