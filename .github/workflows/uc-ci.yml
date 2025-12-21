@@ -1,0 +1,190 @@
+name: UC Framework CI
+
+on:
+  push:
+    branches:
+      - "copilot/specify-uc-in-lean"
+      - "main"
+  pull_request:
+    branches:
+      - "main"
+  workflow_dispatch:
+
+jobs:
+  check-uc-imports:
+    name: Check UC Module Imports
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Check UC modules are imported in VCVio.lean
+        run: |
+          echo "Checking UC module imports..."
+          git ls-files 'VCVio/UC/*.lean' | LC_ALL=C sort | sed 's/\.lean//;s,/,.,g;s/^/import /' > expected_uc_imports.txt
+          
+          # Check if all UC modules are imported
+          while IFS= read -r import_line; do
+            if ! grep -q "^$import_line" VCVio.lean; then
+              echo "❌ Missing import: $import_line"
+              exit 1
+            fi
+          done < expected_uc_imports.txt
+          
+          echo "✅ All UC modules are properly imported"
+
+  build-uc:
+    name: Build UC Framework
+    runs-on: ubuntu-latest
+    steps:
+      - name: Install elan
+        run: |
+          set -o pipefail
+          curl -sSfL https://github.com/leanprover/elan/releases/download/v3.0.0/elan-x86_64-unknown-linux-gnu.tar.gz | tar xz
+          ./elan-init -y --default-toolchain none
+          echo "$HOME/.elan/bin" >> $GITHUB_PATH
+
+      - uses: actions/checkout@v4
+
+      - name: Get mathlib cache
+        run: |
+          lake exe cache get || echo "Cache not available, will build from scratch"
+
+      - name: Build UC modules
+        run: |
+          echo "Building UC framework modules..."
+          lake build VCVio.UC.Basic
+          lake build VCVio.UC.Monad
+          lake build VCVio.UC.Serializable
+          lake build VCVio.UC.Communication
+          lake build VCVio.UC.Functionality
+          lake build VCVio.UC.Security
+          lake build VCVio.UC.StandardFunctionalities
+          lake build VCVio.UC.BasicExamples
+          lake build VCVio.UC.AdvancedExample
+          lake build VCVio.UC.Scratch
+          echo "✅ All UC modules built successfully"
+
+      - name: Build main UC module
+        run: |
+          echo "Building main UC module..."
+          lake build VCVio.UC
+          echo "✅ Main UC module built successfully"
+
+      - name: Build VCVio with UC
+        run: |
+          echo "Building VCVio library with UC framework..."
+          lake build VCVio
+          echo "✅ VCVio library built successfully with UC framework"
+
+  test-uc-examples:
+    name: Test UC Examples
+    runs-on: ubuntu-latest
+    needs: build-uc
+    steps:
+      - name: Install elan
+        run: |
+          set -o pipefail
+          curl -sSfL https://github.com/leanprover/elan/releases/download/v3.0.0/elan-x86_64-unknown-linux-gnu.tar.gz | tar xz
+          ./elan-init -y --default-toolchain none
+          echo "$HOME/.elan/bin" >> $GITHUB_PATH
+
+      - uses: actions/checkout@v4
+
+      - name: Get mathlib cache
+        run: |
+          lake exe cache get || echo "Cache not available"
+
+      - name: Verify UC examples compile
+        run: |
+          echo "Verifying UC examples..."
+          lake build VCVio.UC.BasicExamples
+          lake build VCVio.UC.AdvancedExample
+          lake build VCVio.UC.Scratch
+          echo "✅ All UC examples compile successfully"
+
+  verify-specification:
+    name: Verify UC Specification Completeness
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Check specification files exist
+        run: |
+          echo "Checking UC specification files..."
+          
+          files=(
+            "UC_SPECIFICATION.md"
+            "UC_IMPLEMENTATION_SUMMARY.md"
+            "UC_OVERVIEW.txt"
+            "VCVio/UC/README.md"
+          )
+          
+          for file in "${files[@]}"; do
+            if [ -f "$file" ]; then
+              echo "✅ Found: $file"
+            else
+              echo "❌ Missing: $file"
+              exit 1
+            fi
+          done
+          
+          echo "✅ All specification files present"
+
+      - name: Verify basic UC examples are documented
+        run: |
+          echo "Checking UC_SPECIFICATION.md for basic examples..."
+          
+          patterns=(
+            "Authenticated Channel"
+            "Secure Communication"
+            "Commitment"
+            "Zero-Knowledge"
+            "Two-Party Computation"
+            "F_AUTH"
+            "F_SEC"
+            "F_ZK"
+            "F_COM"
+          )
+          
+          for pattern in "${patterns[@]}"; do
+            if grep -q "$pattern" UC_SPECIFICATION.md; then
+              echo "✅ Found: $pattern"
+            else
+              echo "❌ Missing documentation for: $pattern"
+              exit 1
+            fi
+          done
+          
+          echo "✅ All basic UC patterns documented"
+
+  status-report:
+    name: CI Status Report
+    runs-on: ubuntu-latest
+    needs: [check-uc-imports, build-uc, test-uc-examples, verify-specification]
+    if: always()
+    steps:
+      - name: Report CI Status
+        run: |
+          echo "==================================="
+          echo "UC Framework CI Status Report"
+          echo "==================================="
+          echo ""
+          echo "✅ UC Framework CI completed"
+          echo ""
+          echo "Jobs status:"
+          echo "- Import Check: ${{ needs.check-uc-imports.result }}"
+          echo "- Build UC: ${{ needs.build-uc.result }}"
+          echo "- Test Examples: ${{ needs.test-uc-examples.result }}"
+          echo "- Verify Spec: ${{ needs.verify-specification.result }}"
+          
+          if [ "${{ needs.check-uc-imports.result }}" != "success" ] || \
+             [ "${{ needs.build-uc.result }}" != "success" ] || \
+             [ "${{ needs.test-uc-examples.result }}" != "success" ] || \
+             [ "${{ needs.verify-specification.result }}" != "success" ]; then
+            echo ""
+            echo "❌ Some checks failed"
+            exit 1
+          fi
+          
+          echo ""
+          echo "🎉 All UC Framework checks passed!"

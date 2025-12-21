@@ -50,3 +50,14 @@ import VCVio.ProgramLogic.Relational.Basic
 import VCVio.ProgramLogic.Unary.Examples
 import VCVio.ProgramLogic.Unary.HoareTriple
 import VCVio.UC
+import VCVio.UC.AdvancedExample
+import VCVio.UC.Basic
+import VCVio.UC.BasicExamples
+import VCVio.UC.Communication
+import VCVio.UC.Functionality
+import VCVio.UC.Monad
+import VCVio.UC.Scratch
+import VCVio.UC.Security
+import VCVio.UC.Serializable
+import VCVio.UC.StandardFunctionalities
+import VCVio.UC.Test
